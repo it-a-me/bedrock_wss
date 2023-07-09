@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
     let mut connection = std::net::TcpStream::connect(args.port)?;
     eprintln!("connected");
     let message = postcard::to_allocvec(&message)?;
-    connection.write(&message)?;
+    connection.write_all(&message)?;
     connection.shutdown(std::net::Shutdown::Write)?;
     eprintln!("awaiting response");
     let mut buf = Vec::new();

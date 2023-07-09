@@ -18,7 +18,8 @@ impl Request {
             Self::Command(c) => serde_json::to_string_pretty(c),
         }
     }
-    pub fn header(&self) -> &Header {
+    #[must_use]
+    pub const fn header(&self) -> &Header {
         match self {
             Self::Subscribe(subscribe) => &subscribe.header,
             Self::Command(command) => &command.header,
@@ -59,7 +60,7 @@ impl Header {
         }
     }
     pub fn parse(json: &str) -> Result<Self, serde_json::Error> {
-        Ok(serde_json::from_str(json)?)
+        serde_json::from_str(json)
     }
 }
 

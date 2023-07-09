@@ -18,7 +18,7 @@ impl Subscribe {
         let body = Body::new(event);
         Self { header, body }
     }
-    pub fn event(&self) -> EventType {
+    pub const fn event(&self) -> EventType {
         self.body.event_name
     }
 }

@@ -24,7 +24,7 @@ pub async fn wait_for_connection(addr: &str) -> anyhow::Result<(McConnection, So
     tracing::info!("initialized connection with {mc_addr}");
     Ok((web_socket, mc_addr))
 }
-pub async fn message_handler(
+pub fn message_handler(
     mc_stream: SplitStream<McConnection>,
 ) -> (
     UnboundedReceiver<MinecraftMessage>,
@@ -62,8 +62,7 @@ pub enum MinecraftMessage {
 impl MinecraftMessage {
     pub fn content(&self) -> &str {
         match &self {
-            Self::Subscription { event, content } => content,
-            Self::Generic(content) => content,
+            Self::Subscription { event: _, content } | Self::Generic(content) => content,
         }
     }
     pub fn uuid(&self) -> anyhow::Result<Uuid> {

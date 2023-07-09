@@ -8,18 +8,20 @@ impl super::Request {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct CommandRequest {
     body: Body,
     pub header: Header,
 }
 impl CommandRequest {
+    #[must_use]
     pub fn new(command: String, origin: Origin) -> Self {
         let header = Header::new(
             MessagePurpose::CommandRequest,
             Some(MessageType::CommandRequest),
         );
         let body = Body::new(command, origin);
-        Self { header, body }
+        Self { body, header }
     }
 }
 

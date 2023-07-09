@@ -1,16 +1,19 @@
+#![warn(
+    clippy::complexity,
+    clippy::correctness,
+    clippy::pedantic,
+    clippy::perf
+)]
+#![allow(clippy::module_name_repetitions)]
 use std::collections::HashMap;
 
 use bedrock_wss::{
     re_exports::{IntoEnumIterator, Uuid},
-    request::{EventType, EventTypeIter},
+    request::EventType,
 };
 use clap::Parser;
 use client::ClientRequest;
-use futures::{
-    channel::{mpsc::UnboundedSender, oneshot},
-    stream::SplitSink,
-    SinkExt, StreamExt,
-};
+use futures::{channel::mpsc::UnboundedSender, stream::SplitSink, SinkExt, StreamExt};
 use minecraft::McConnection;
 use tokio_tungstenite::tungstenite::Message;
 mod client;
@@ -25,12 +28,12 @@ async fn main() -> anyhow::Result<()> {
         .with_file(true)
         .with_line_number(true)
         .init();
-    let (mc_connection, mc_addr) = minecraft::wait_for_connection(&args.minecraft_address).await?;
+    let (mc_connection, _mc_addr) = minecraft::wait_for_connection(&args.minecraft_address).await?;
     let (mut mc_sink, mc_stream) = mc_connection.split();
-    let (mut message_queue, mc_connection) = minecraft::message_handler(mc_stream).await;
+    let (mut message_queue, mc_connection) = minecraft::message_handler(mc_stream);
     let client_listener = tokio::net::TcpListener::bind(args.client_address).await?;
-    let (client_listener, mut client_messages) = client::listen(client_listener).await;
-    let mut event_subs = EventSubs::from_iter(EventType::iter().map(|t| (t, Vec::new())));
+    let (client_listener, mut client_messages) = client::listen(client_listener);
+    let mut event_subs: EventSubs = EventType::iter().map(|t| (t, Vec::new())).collect();
     let mut response_waiters: HashMap<Uuid, UnboundedSender<String>> = HashMap::new();
     loop {
         tokio::select! {
@@ -102,7 +105,7 @@ async fn handle_mc_message(
             subs.retain(|c| !c.is_closed());
             for sub in event_subs.get_mut(&event).unwrap() {
                 if !sub.is_closed() {
-                    sub.send(content.to_owned()).await?;
+                    sub.send(content.clone()).await?;
                 }
             }
             Ok(None)

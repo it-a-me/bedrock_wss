@@ -2,7 +2,7 @@ use std::{collections::HashMap, net::SocketAddr};
 
 use bedrock_wss::request::Request;
 use futures::{
-    channel::mpsc::{channel, unbounded, UnboundedReceiver, UnboundedSender},
+    channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender},
     SinkExt, StreamExt,
 };
 use tokio::{
@@ -10,22 +10,8 @@ use tokio::{
     net::{TcpListener, TcpStream},
     task::JoinHandle,
 };
-use tokio_tungstenite::tungstenite::http::response;
 
-pub struct ClientListener {
-    pub addr: String,
-    state: State,
-}
-enum State {
-    Listening(JoinHandle<()>),
-    Idle(TcpListener),
-}
-pub async fn bind_on(addr: String) -> anyhow::Result<TcpListener> {
-    tracing::info!("initializing client tcp socket on {addr}");
-    Ok(tokio::net::TcpListener::bind(&addr).await?)
-}
-
-pub async fn listen(
+pub fn listen(
     listener: TcpListener,
 ) -> (
     JoinHandle<anyhow::Result<()>>,
@@ -48,7 +34,7 @@ async fn listener_task(
         if connections.insert(addr, client_connection).is_some() {
             anyhow::bail!("tried to connect over {addr} but a client was already connected");
         }
-        let client_addrs = connections.keys().map(|v| v.to_owned()).collect::<Vec<_>>();
+        let client_addrs = connections.keys().copied().collect::<Vec<_>>();
         for addr in client_addrs {
             if connections[&addr].is_finished() {
                 connections.remove(&addr).unwrap().await??;
@@ -72,10 +58,6 @@ impl ClientRequest {
             receiver,
         )
     }
-    pub async fn send(&mut self, response: String) -> anyhow::Result<()> {
-        self.response_vector.send(response).await?;
-        Ok(())
-    }
 }
 
 async fn request_handler(
@@ -92,7 +74,7 @@ async fn request_handler(
     let read_handle = tokio::spawn(async move {
         sender.send(client_request).await?;
         while let Some(response) = responses.next().await {
-            if let Err(_) = client.write(response.as_bytes()).await {
+            if client.write(response.as_bytes()).await.is_err() {
                 break;
             }
         }
