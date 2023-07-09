@@ -40,7 +40,7 @@ pub struct Header {
 enum MessagePurpose {
     Event,
     Subscribe,
-    #[serde(rename = "CommandRequest")]
+    // #[serde(rename = "CommandRequest")]
     CommandRequest,
     CommandResponse,
 }

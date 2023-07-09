@@ -44,8 +44,6 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         tracing::error!("reponse with no waiter {generic_response}");
                     }
-                } else {
-                    break
                 }
             }
             request = client_messages.next() => {
@@ -98,19 +96,18 @@ async fn handle_mc_message(
     let Some(message) = message else {
         anyhow::bail!("minecraft message queue closed unexpectedly");
     };
-    let uuid = message.uuid()?;
-    match message {
+    match &message {
         minecraft::MinecraftMessage::Subscription { event, content } => {
-            let subs = event_subs.get_mut(&event).unwrap();
+            let subs = event_subs.get_mut(event).unwrap();
             subs.retain(|c| !c.is_closed());
-            for sub in event_subs.get_mut(&event).unwrap() {
+            for sub in event_subs.get_mut(event).unwrap() {
                 if !sub.is_closed() {
                     sub.send(content.clone()).await?;
                 }
             }
             Ok(None)
         }
-        minecraft::MinecraftMessage::Generic(m) => Ok(Some((uuid, m))),
+        minecraft::MinecraftMessage::Generic(m) => Ok(Some((message.uuid()?, m.clone()))),
     }
 }
 
