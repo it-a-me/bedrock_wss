@@ -1,0 +1,2 @@
+[workspace]
+members = ["bedrock_wss", "wssrock_server", "wssrock_cli"]

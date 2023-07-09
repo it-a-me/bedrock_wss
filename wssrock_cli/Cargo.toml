@@ -1,0 +1,12 @@
+[package]
+name = "wssrock_cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.71"
+bedrock_wss = { version = "0.1.0", path = "../bedrock_wss" }
+clap = { version = "4.3.11", features = ["derive"] }
+postcard = { version = "1.0.4", features = ["alloc"] }
